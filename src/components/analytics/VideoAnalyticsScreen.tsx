@@ -1,5 +1,9 @@
 import { useRef, useState } from "react";
+import { Plus, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardTitle, DualBar, Ed, ProgressList } from "./primitives";
+import type { BarItem } from "./primitives";
 import { MetricChart } from "./MetricChart";
 import { GenderGauge } from "./GenderGauge";
 import {
@@ -19,6 +23,9 @@ export function VideoAnalyticsScreen() {
   const [metricIdx, setMetricIdx] = useState(0);
   const [thumb, setThumb] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [locations, setLocations] = useState<BarItem[]>(locationsData);
+  const [newCountry, setNewCountry] = useState("");
+  const [newPercentage, setNewPercentage] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -51,6 +58,29 @@ export function VideoAnalyticsScreen() {
   };
 
   const metric = metrics[metricIdx]!;
+
+  const addCountry = () => {
+    const label = newCountry.trim();
+    const pct = Math.min(Math.max(Number.parseFloat(newPercentage) || 0, 0), 100);
+    if (!label) {
+      showToast("Country name डालें");
+      return;
+    }
+    if (locations.length >= 5) {
+      showToast("अधिकतम 5 countries रख सकते हैं");
+      return;
+    }
+    setLocations((current) => [...current, { label, pct, pctStr: `${pct}%` }]);
+    setNewCountry("");
+    setNewPercentage("");
+    showToast(`${label} add हो गया`);
+  };
+
+  const removeCountry = (index: number) => {
+    const removed = locations[index];
+    setLocations((current) => current.filter((_, itemIndex) => itemIndex !== index));
+    showToast(`${removed?.label ?? "Country"} delete हो गया`);
+  };
 
   return (
     <div className="tt-page">
@@ -256,7 +286,49 @@ export function VideoAnalyticsScreen() {
 
               <Card>
                 <CardTitle title="Locations" editable={editMode} />
-                <ProgressList data={locationsData} editable={editMode} />
+                <div className="tt-location-list">
+                  {locations.map((item, index) => (
+                    <div className="tt-location-item" key={`${item.label}-${index}`}>
+                      <ProgressList data={[item]} editable={editMode} />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="tt-location-delete"
+                        aria-label={`Delete ${item.label}`}
+                        title={`Delete ${item.label}`}
+                        onClick={() => removeCountry(index)}
+                      >
+                        <Trash2 />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+                {locations.length < 5 ? (
+                  <div className="tt-location-add">
+                    <Input
+                      value={newCountry}
+                      onChange={(event) => setNewCountry(event.target.value)}
+                      placeholder="Country"
+                      aria-label="Country name"
+                    />
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      value={newPercentage}
+                      onChange={(event) => setNewPercentage(event.target.value)}
+                      placeholder="%"
+                      aria-label="Percentage"
+                    />
+                    <Button type="button" size="icon" onClick={addCountry} aria-label="Add country" title="Add country">
+                      <Plus />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="tt-location-limit">5 countries added</div>
+                )}
               </Card>
             </>
           ) : null}

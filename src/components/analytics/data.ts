@@ -77,12 +77,6 @@ export const locationsData: BarItem[] = [
   { label: "South Africa", pct: 4.8, pctStr: "4.8%" },
   { label: "United Kingdom", pct: 4.3, pctStr: "4.3%" },
   { label: "United States", pct: 3.2, pctStr: "3.2%", arrow: true },
-  { label: "Germany", pct: 3.1, pctStr: "3.1%" },
-  { label: "Saudi Arabia", pct: 1.5, pctStr: "1.5%" },
-  { label: "Spain", pct: 1.4, pctStr: "1.4%", arrow: true },
-  { label: "Poland", pct: 1.4, pctStr: "1.4%" },
-  { label: "Iraq", pct: 1.2, pctStr: "1.2%" },
-  { label: "Other", pct: 9.3, pctStr: "9.3%", arrow: true },
 ];
 
 export const headerStats = [
