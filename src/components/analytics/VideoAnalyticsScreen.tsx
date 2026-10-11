@@ -423,6 +423,7 @@ function RetentionPreview({
         max={100}
         value={value}
         className="tt-retention-range"
+        style={{ "--retention-progress": `${value}%` } as React.CSSProperties}
         aria-label="Video retention timeline"
         onChange={(event) => onChange(Number(event.target.value))}
       />
