@@ -268,3 +268,21 @@
 .tt-video-preview { width: 100%; height: 180px; border-radius: 8px; background: #1f1f23; display: flex; align-items: center; justify-content: center; position: relative; margin-bottom: 12px; overflow: hidden; cursor: pointer; }
 .tt-play-btn { width: 48px; height: 48px; border-radius: 50%; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px; z-index: 2; }
 .tt-range { width: 100%; accent-color: #fff; margin-bottom: 6px; }
+
+.tt-retention { margin-top: 16px; }
+.tt-retention-video { width: 55%; aspect-ratio: 9 / 14; max-height: 286px; margin: 0 auto 14px; background-color: #242426; border-radius: 4px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; }
+.tt-retention-video img { width: 100%; height: 100%; object-fit: cover; }
+.tt-retention-placeholder { color: #8e8e93; font-size: 12px; }
+.tt-retention-play { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding-left: 3px; background-color: rgba(0,0,0,0.72); color: #fff; font-size: 18px; }
+.tt-retention-chart { height: 105px; position: relative; margin: 0 2px 4px; }
+.tt-retention-chart svg { width: 100%; height: 100%; overflow: visible; }
+.tt-retention-grid { stroke: #656569; stroke-width: 0.8; stroke-dasharray: 1.5 1.5; }
+.tt-retention-base { stroke: #656569; stroke-width: 0.8; }
+.tt-retention-line { fill: none; stroke: #4ba1ff; stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+.tt-retention-marker-line { stroke: #4ba1ff; stroke-width: 0.8; vector-effect: non-scaling-stroke; }
+.tt-retention-marker { fill: #fff; stroke: #4ba1ff; stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+.tt-retention-100, .tt-retention-50 { position: absolute; right: 0; color: #8e8e93; font-size: 11px; }
+.tt-retention-100 { top: 3px; }
+.tt-retention-50 { top: 43px; }
+.tt-retention-range { width: 100%; height: 24px; margin: -2px 0 0; accent-color: #fff; cursor: pointer; }
+.tt-retention-times { display: flex; justify-content: space-between; color: #8e8e93; font-size: 11.5px; margin-top: 1px; }

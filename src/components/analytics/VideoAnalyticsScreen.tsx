@@ -26,6 +26,7 @@ export function VideoAnalyticsScreen() {
   const [locations, setLocations] = useState<BarItem[]>(locationsData);
   const [newCountry, setNewCountry] = useState("");
   const [newPercentage, setNewPercentage] = useState("");
+  const [retentionPoint, setRetentionPoint] = useState(79);
   const fileRef = useRef<HTMLInputElement>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -201,12 +202,13 @@ export function VideoAnalyticsScreen() {
                   Most viewers stopped watching at 0:01. Check out the moment in your video where most viewers lost
                   interest.
                 </Ed>
-                <VideoPreview thumb={thumb} onClick={pickThumb} />
-                <input type="range" min={0} max={100} defaultValue={0} className="tt-range" />
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11.5, color: "#8e8e93" }}>
-                  <Ed editable={editMode}>00:00 (100%)</Ed>
-                  <Ed editable={editMode}>00:26</Ed>
-                </div>
+                <RetentionPreview
+                  thumb={thumb}
+                  onClick={pickThumb}
+                  value={retentionPoint}
+                  onChange={setRetentionPoint}
+                  editable={editMode}
+                />
               </Card>
 
               <Card>
@@ -370,6 +372,64 @@ function VideoPreview({ thumb, onClick }: { thumb: string | null; onClick: () =>
         />
       ) : null}
       <div className="tt-play-btn">▶</div>
+    </div>
+  );
+}
+
+function RetentionPreview({
+  thumb,
+  onClick,
+  value,
+  onChange,
+  editable,
+}: {
+  thumb: string | null;
+  onClick: () => void;
+  value: number;
+  onChange: (value: number) => void;
+  editable: boolean;
+}) {
+  const seconds = Math.round((value / 100) * 24);
+  const retention = Math.max(4, Math.round(100 - Math.sqrt(value) * 10.6));
+  const markerX = 12 + value * 0.76;
+  const markerY = Math.min(78, 17 + Math.sqrt(value) * 6.8);
+
+  return (
+    <div className="tt-retention">
+      <div className="tt-retention-video" onClick={onClick} title="Click to upload video thumbnail">
+        {thumb ? <img src={thumb} alt="Video preview" /> : <span className="tt-retention-placeholder">Set video image</span>}
+        <span className="tt-retention-play">▶</span>
+      </div>
+
+      <div className="tt-retention-chart" aria-label="Audience retention graph">
+        <svg viewBox="0 0 100 92" preserveAspectRatio="none" aria-hidden="true">
+          <line x1="12" y1="14" x2="88" y2="14" className="tt-retention-grid" />
+          <line x1="12" y1="49" x2="88" y2="49" className="tt-retention-grid" />
+          <line x1="12" y1="84" x2="88" y2="84" className="tt-retention-base" />
+          <polyline
+            points="12,14 15,56 19,65 25,71 34,75 47,78 60,80 72,81 88,82"
+            className="tt-retention-line"
+          />
+          <line x1={markerX} y1="14" x2={markerX} y2="84" className="tt-retention-marker-line" />
+          <circle cx={markerX} cy={markerY} r="2.2" className="tt-retention-marker" />
+        </svg>
+        <span className="tt-retention-100">100%</span>
+        <span className="tt-retention-50">50%</span>
+      </div>
+
+      <input
+        type="range"
+        min={0}
+        max={100}
+        value={value}
+        className="tt-retention-range"
+        aria-label="Video retention timeline"
+        onChange={(event) => onChange(Number(event.target.value))}
+      />
+      <div className="tt-retention-times">
+        <Ed editable={editable}>{`00:${String(seconds).padStart(2, "0")} (${retention}%)`}</Ed>
+        <Ed editable={editable}>00:24</Ed>
+      </div>
     </div>
   );
 }
