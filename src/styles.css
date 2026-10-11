@@ -280,11 +280,11 @@
 .tt-retention-base { stroke: #626368; stroke-width: 0.9; }
 .tt-retention-line { fill: none; stroke: #55aaff; stroke-width: 1.45; vector-effect: non-scaling-stroke; }
 .tt-retention-marker-line { stroke: #55aaff; stroke-width: 1; vector-effect: non-scaling-stroke; }
-.tt-retention-marker { fill: #fff; stroke: #55aaff; stroke-width: 1.6; vector-effect: non-scaling-stroke; filter: drop-shadow(0 0 2px #55aaff); }
+.tt-retention-marker { fill: #55aaff; stroke: #fff; stroke-width: 1.2; vector-effect: non-scaling-stroke; filter: drop-shadow(0 0 2px rgba(0,0,0,0.45)); }
 .tt-retention-100, .tt-retention-50 { position: absolute; right: 0; color: #a0a0a5; font-size: 12px; line-height: 1; }
 .tt-retention-100 { top: 5px; }
 .tt-retention-50 { top: 48px; }
-.tt-retention-range { appearance: none; -webkit-appearance: none; width: calc(100% - 2px); height: 6px; display: block; margin: -2px 1px 0; padding: 0; border: 0; border-radius: 4px; outline: none; cursor: pointer; background: linear-gradient(to right, #fff 0 var(--retention-progress), #5a5a5d var(--retention-progress) 100%); }
+.tt-retention-range { appearance: none; -webkit-appearance: none; width: calc(100% - 2px); height: 6px; display: block; margin: 10px 1px 0; padding: 0; border: 0; border-radius: 4px; outline: none; cursor: pointer; background: linear-gradient(to right, #fff 0 var(--retention-progress), #5a5a5d var(--retention-progress) 100%); }
 .tt-retention-range::-webkit-slider-runnable-track { height: 6px; border-radius: 4px; background: transparent; }
 .tt-retention-range::-webkit-slider-thumb { appearance: none; -webkit-appearance: none; width: 31px; height: 31px; margin-top: -12.5px; border: 0; border-radius: 50%; background-color: #fff; box-shadow: 0 1px 5px rgba(0,0,0,0.5); }
 .tt-retention-range::-moz-range-track { height: 6px; border: 0; border-radius: 4px; background: transparent; }
