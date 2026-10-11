@@ -21,12 +21,14 @@ export function VideoAnalyticsScreen() {
   const [editMode, setEditMode] = useState(false);
   const [tab, setTab] = useState(1);
   const [metricIdx, setMetricIdx] = useState(0);
-  const [thumb, setThumb] = useState<string | null>(null);
+  const [thumb, setThumb] = useState<string | null>("/video-thumb.jpg");
   const [toast, setToast] = useState<string | null>(null);
   const [locations, setLocations] = useState<BarItem[]>(locationsData);
   const [newCountry, setNewCountry] = useState("");
   const [newPercentage, setNewPercentage] = useState("");
   const [retentionPoint, setRetentionPoint] = useState(79);
+  const [likesPoint, setLikesPoint] = useState(0);
+  const [likesThumb, setLikesThumb] = useState<string | null>("/likes-thumb.jpg");
   const fileRef = useRef<HTMLInputElement>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -196,7 +198,7 @@ export function VideoAnalyticsScreen() {
               <Card>
                 <CardTitle title="Retention rate" editable={editMode} />
                 <Ed style={{ fontSize: 13.5, fontWeight: 600, display: "block", marginTop: 4 }} editable={editMode}>
-                  On average, viewers watched 8% of your video.
+                  On average, viewers watched 29% of your video.
                 </Ed>
                 <Ed className="tt-card-subtext" style={{ marginTop: 4 }} editable={editMode}>
                   Most viewers stopped watching at 0:01. Check out the moment in your video where most viewers lost
@@ -348,8 +350,13 @@ export function VideoAnalyticsScreen() {
                 <Ed className="tt-card-subtext" style={{ marginTop: 6 }} editable={editMode}>
                   Most viewers liked this video at 0:00. Check out the moment where most viewers liked your video.
                 </Ed>
-                <VideoPreview thumb={thumb} onClick={pickThumb} />
-                <input type="range" min={0} max={100} defaultValue={0} className="tt-range" />
+                <LikesPreview
+                  thumb={likesThumb}
+                  onClick={pickThumb}
+                  value={likesPoint}
+                  onChange={setLikesPoint}
+                  editable={editMode}
+                />
               </Card>
             </>
           ) : null}
@@ -376,6 +383,135 @@ function VideoPreview({ thumb, onClick }: { thumb: string | null; onClick: () =>
   );
 }
 
+function LikesPreview({
+  thumb,
+  onClick,
+  value,
+  onChange,
+  editable,
+}: {
+  thumb: string | null;
+  onClick: () => void;
+  value: number;
+  onChange: (value: number) => void;
+  editable: boolean;
+}) {
+  const currentProgress = value / 100;
+  const seconds = Math.round(currentProgress * 24);
+  const currentPct = value === 0 ? 100 : value <= 3 ? Math.round(100 - (value / 3) * 100) : 0;
+
+  // yTop = 10 (100%), yMid = 52 (50%), yBottom = 94 (0%)
+  const curveD = "M 0,10 L 25,94 L 1000,94";
+  const areaD = "M 0,10 L 25,94 L 0,94 Z";
+
+  const markerX = Number((currentProgress * 1000).toFixed(1));
+  const markerY = Number((94 - (currentPct / 100) * 84).toFixed(1));
+
+  return (
+    <div className="tt-retention">
+      <div className="tt-retention-video" onClick={onClick} title="Click to upload video thumbnail">
+        {thumb ? (
+          <img src={thumb} alt="Likes video preview" />
+        ) : (
+          <span className="tt-retention-placeholder">Set video image</span>
+        )}
+        {thumb === "/likes-thumb.jpg" ? null : <span className="tt-retention-play">▶</span>}
+      </div>
+
+      <div className="tt-retention-chart-row">
+        <div className="tt-retention-plot">
+          <svg viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+              <linearGradient id="likesGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#4ba1ff" stopOpacity="0.25" />
+                <stop offset="100%" stopColor="#4ba1ff" stopOpacity="0.0" />
+              </linearGradient>
+            </defs>
+
+            <line x1="0" y1="10" x2="1000" y2="10" className="tt-retention-grid" />
+            <line x1="0" y1="52" x2="1000" y2="52" className="tt-retention-grid" />
+            <line x1="0" y1="94" x2="1000" y2="94" className="tt-retention-base" />
+
+            <path d={areaD} fill="url(#likesGrad)" />
+            <path d={curveD} className="tt-retention-line" />
+
+            <line x1={markerX} y1="10" x2={markerX} y2="94" className="tt-retention-marker-line" />
+          </svg>
+          <div
+            className="tt-retention-marker-dot"
+            style={{
+              left: `${currentProgress * 100}%`,
+              top: `${(markerY / 100) * 100}%`,
+            }}
+          />
+        </div>
+
+        <div className="tt-retention-labels">
+          <div className="tt-ret-lbl-item" style={{ top: "10%" }}>
+            <span className="tt-ret-lbl-dash" />
+            <span className="tt-ret-lbl-text">100%</span>
+          </div>
+          <div className="tt-ret-lbl-item" style={{ top: "52%" }}>
+            <span className="tt-ret-lbl-dash" />
+            <span className="tt-ret-lbl-text">50%</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="tt-retention-slider-row">
+        <input
+          type="range"
+          min={0}
+          max={100}
+          value={value}
+          className="tt-retention-range"
+          style={{ "--retention-progress": `${value}%` } as React.CSSProperties}
+          aria-label="Likes timeline"
+          onChange={(event) => onChange(Number(event.target.value))}
+        />
+      </div>
+
+      <div className="tt-retention-times-row">
+        <Ed editable={editable}>{`00:${String(seconds).padStart(2, "0")} (${currentPct}%)`}</Ed>
+        <Ed editable={editable}>00:24</Ed>
+      </div>
+    </div>
+  );
+}
+
+const RETENTION_POINTS: [number, number][] = [
+  [0.0, 100.0],
+  [0.01, 85.0],
+  [0.02, 68.0],
+  [0.035, 47.0],
+  [0.06, 33.0],
+  [0.09, 27.0],
+  [0.14, 20.6],
+  [0.2, 16.5],
+  [0.33, 12.9],
+  [0.46, 10.0],
+  [0.6, 8.2],
+  [0.73, 7.1],
+  [0.792, 6.0],
+  [0.86, 5.5],
+  [1.0, 4.5],
+];
+
+function getRetention(progress: number): number {
+  if (progress <= 0) return 100;
+  if (progress >= 1) return 5;
+  for (let i = 0; i < RETENTION_POINTS.length - 1; i++) {
+    const [t0, r0] = RETENTION_POINTS[i];
+    const [t1, r1] = RETENTION_POINTS[i + 1];
+    if (progress >= t0 && progress <= t1) {
+      const ratio = (progress - t0) / (t1 - t0);
+      const smooth = (1 - Math.cos(ratio * Math.PI)) / 2;
+      return Math.round(r0 + (r1 - r0) * smooth);
+    }
+  }
+  return 5;
+}
+
 function RetentionPreview({
   thumb,
   onClick,
@@ -389,46 +525,94 @@ function RetentionPreview({
   onChange: (value: number) => void;
   editable: boolean;
 }) {
-  const seconds = Math.round((value / 100) * 24);
-  const retention = Math.max(4, Math.round(100 - Math.sqrt(value) * 10.6));
-  const markerX = 12 + value * 0.76;
-  const markerY = Math.min(78, 17 + Math.sqrt(value) * 6.8);
+  const currentProgress = value / 100;
+  const seconds = Math.round(currentProgress * 24);
+  const currentRetention = getRetention(currentProgress);
+
+  // SVG dimensions: viewBox="0 0 1000 100"
+  // yTop = 10 (100%), yMid = 52 (50%), yBottom = 94 (0%)
+  const steps = 100;
+  const curvePts: [number, number][] = [];
+  for (let i = 0; i <= steps; i++) {
+    const p = i / steps;
+    const x = Number((p * 1000).toFixed(1));
+    const r = getRetention(p);
+    const y = Number((94 - (r / 100) * 84).toFixed(1));
+    curvePts.push([x, y]);
+  }
+  const curveD = curvePts.reduce((acc, [x, y], idx) => (idx === 0 ? `M ${x},${y}` : `${acc} L ${x},${y}`), "");
+  const areaD = `${curveD} L 1000,94 L 0,94 Z`;
+
+  const markerX = Number((currentProgress * 1000).toFixed(1));
+  const markerY = Number((94 - (currentRetention / 100) * 84).toFixed(1));
 
   return (
     <div className="tt-retention">
       <div className="tt-retention-video" onClick={onClick} title="Click to upload video thumbnail">
-        {thumb ? <img src={thumb} alt="Video preview" /> : <span className="tt-retention-placeholder">Set video image</span>}
-        <span className="tt-retention-play">▶</span>
+        {thumb ? (
+          <img src={thumb} alt="Video preview" />
+        ) : (
+          <span className="tt-retention-placeholder">Set video image</span>
+        )}
+        {thumb === "/video-thumb.jpg" ? null : <span className="tt-retention-play">▶</span>}
       </div>
 
-      <div className="tt-retention-chart" aria-label="Audience retention graph">
-        <svg viewBox="0 0 100 92" preserveAspectRatio="none" aria-hidden="true">
-          <line x1="12" y1="14" x2="88" y2="14" className="tt-retention-grid" />
-          <line x1="12" y1="49" x2="88" y2="49" className="tt-retention-grid" />
-          <line x1="12" y1="84" x2="88" y2="84" className="tt-retention-base" />
-          <polyline
-            points="12,14 15,56 19,65 25,71 34,75 47,78 60,80 72,81 88,82"
-            className="tt-retention-line"
+      <div className="tt-retention-chart-row">
+        <div className="tt-retention-plot">
+          <svg viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+              <linearGradient id="retentionGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#4ba1ff" stopOpacity="0.22" />
+                <stop offset="100%" stopColor="#4ba1ff" stopOpacity="0.0" />
+              </linearGradient>
+            </defs>
+
+            <line x1="0" y1="10" x2="1000" y2="10" className="tt-retention-grid" />
+            <line x1="0" y1="52" x2="1000" y2="52" className="tt-retention-grid" />
+            <line x1="0" y1="94" x2="1000" y2="94" className="tt-retention-base" />
+
+            <path d={areaD} fill="url(#retentionGrad)" />
+            <path d={curveD} className="tt-retention-line" />
+
+            <line x1={markerX} y1="10" x2={markerX} y2="94" className="tt-retention-marker-line" />
+            {/* SVG circle replaced by HTML dot below */}
+          </svg>
+          <div
+            className="tt-retention-marker-dot"
+            style={{
+              left: `${currentProgress * 100}%`,
+              top: `${(markerY / 100) * 100}%`,
+            }}
           />
-          <line x1={markerX} y1="14" x2={markerX} y2="84" className="tt-retention-marker-line" />
-          <circle cx={markerX} cy={markerY} r="2.2" className="tt-retention-marker" />
-        </svg>
-        <span className="tt-retention-100">100%</span>
-        <span className="tt-retention-50">50%</span>
+        </div>
+
+        <div className="tt-retention-labels">
+          <div className="tt-ret-lbl-item" style={{ top: "10%" }}>
+            <span className="tt-ret-lbl-dash" />
+            <span className="tt-ret-lbl-text">100%</span>
+          </div>
+          <div className="tt-ret-lbl-item" style={{ top: "52%" }}>
+            <span className="tt-ret-lbl-dash" />
+            <span className="tt-ret-lbl-text">50%</span>
+          </div>
+        </div>
       </div>
 
-      <input
-        type="range"
-        min={0}
-        max={100}
-        value={value}
-        className="tt-retention-range"
-        style={{ "--retention-progress": `${value}%` } as React.CSSProperties}
-        aria-label="Video retention timeline"
-        onChange={(event) => onChange(Number(event.target.value))}
-      />
-      <div className="tt-retention-times">
-        <Ed editable={editable}>{`00:${String(seconds).padStart(2, "0")} (${retention}%)`}</Ed>
+      <div className="tt-retention-slider-row">
+        <input
+          type="range"
+          min={0}
+          max={100}
+          value={value}
+          className="tt-retention-range"
+          style={{ "--retention-progress": `${value}%` } as React.CSSProperties}
+          aria-label="Video retention timeline"
+          onChange={(event) => onChange(Number(event.target.value))}
+        />
+      </div>
+
+      <div className="tt-retention-times-row">
+        <Ed editable={editable}>{`00:${String(seconds).padStart(2, "0")} (${currentRetention}%)`}</Ed>
         <Ed editable={editable}>00:24</Ed>
       </div>
     </div>
