@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,18 +17,41 @@ import {
   trafficData,
 } from "./data";
 
+function usePersisted<T>(key: string, initial: T) {
+  const [value, setValue] = useState<T>(initial);
+  const loaded = useRef(false);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(`tt-state:${key}`);
+      if (raw !== null) setValue(JSON.parse(raw) as T);
+    } catch {
+      /* ignore */
+    }
+    loaded.current = true;
+  }, [key]);
+  useEffect(() => {
+    if (!loaded.current) return;
+    try {
+      localStorage.setItem(`tt-state:${key}`, JSON.stringify(value));
+    } catch {
+      /* ignore */
+    }
+  }, [key, value]);
+  return [value, setValue] as const;
+}
+
 export function VideoAnalyticsScreen() {
   const [editMode, setEditMode] = useState(false);
-  const [tab, setTab] = useState(1);
+  const [tab, setTab] = usePersisted("tab", 1);
   const [metricIdx, setMetricIdx] = useState(0);
-  const [thumb, setThumb] = useState<string | null>("/video-thumb.jpg");
+  const [thumb, setThumb] = usePersisted<string | null>("thumb", "/video-thumb.jpg");
   const [toast, setToast] = useState<string | null>(null);
-  const [locations, setLocations] = useState<BarItem[]>(locationsData);
+  const [locations, setLocations] = usePersisted<BarItem[]>("locations", locationsData);
   const [newCountry, setNewCountry] = useState("");
   const [newPercentage, setNewPercentage] = useState("");
-  const [retentionPoint, setRetentionPoint] = useState(79);
-  const [likesPoint, setLikesPoint] = useState(0);
-  const [likesThumb, setLikesThumb] = useState<string | null>("/likes-thumb.jpg");
+  const [retentionPoint, setRetentionPoint] = usePersisted("retentionPoint", 79);
+  const [likesPoint, setLikesPoint] = usePersisted("likesPoint", 0);
+  const [likesThumb] = usePersisted<string | null>("likesThumb", "/likes-thumb.jpg");
   const fileRef = useRef<HTMLInputElement>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -501,8 +524,8 @@ function getRetention(progress: number): number {
   if (progress <= 0) return 100;
   if (progress >= 1) return 5;
   for (let i = 0; i < RETENTION_POINTS.length - 1; i++) {
-    const [t0, r0] = RETENTION_POINTS[i];
-    const [t1, r1] = RETENTION_POINTS[i + 1];
+    const [t0, r0] = RETENTION_POINTS[i]!;
+    const [t1, r1] = RETENTION_POINTS[i + 1]!;
     if (progress >= t0 && progress <= t1) {
       const ratio = (progress - t0) / (t1 - t0);
       const smooth = (1 - Math.cos(ratio * Math.PI)) / 2;

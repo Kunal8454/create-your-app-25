@@ -1,4 +1,14 @@
-import { useRef, type ReactNode } from "react";
+import { useLayoutEffect, useRef, type ReactNode } from "react";
+
+function domPath(el: HTMLElement): string {
+  const parts: number[] = [];
+  let node: HTMLElement | null = el;
+  while (node && !node.classList.contains("tt-frame") && node.parentElement) {
+    parts.unshift(Array.prototype.indexOf.call(node.parentElement.children, node));
+    node = node.parentElement;
+  }
+  return parts.join(".");
+}
 
 export function Ed({
   children,
@@ -13,14 +23,45 @@ export function Ed({
   editable: boolean;
   onInput?: (text: string) => void;
 }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const keyRef = useRef<string | null>(null);
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const key = `tt-ed:${domPath(el)}|${el.innerText}`;
+    keyRef.current = key;
+    try {
+      const saved = localStorage.getItem(key);
+      if (saved !== null && saved !== el.innerText) {
+        el.innerText = saved;
+        onInput?.(saved);
+      }
+    } catch {
+      /* ignore */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <span
+      ref={ref}
       className={className}
       style={style}
       contentEditable={editable}
       suppressContentEditableWarning
       spellCheck={false}
-      onInput={(e) => onInput?.(e.currentTarget.innerText)}
+      onInput={(e) => {
+        const text = e.currentTarget.innerText;
+        if (keyRef.current) {
+          try {
+            localStorage.setItem(keyRef.current, text);
+          } catch {
+            /* ignore */
+          }
+        }
+        onInput?.(text);
+      }}
     >
       {children}
     </span>
