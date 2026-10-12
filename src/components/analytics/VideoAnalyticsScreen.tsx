@@ -524,8 +524,8 @@ function getRetention(progress: number): number {
   if (progress <= 0) return 100;
   if (progress >= 1) return 5;
   for (let i = 0; i < RETENTION_POINTS.length - 1; i++) {
-    const [t0, r0] = RETENTION_POINTS[i];
-    const [t1, r1] = RETENTION_POINTS[i + 1];
+    const [t0, r0] = RETENTION_POINTS[i]!;
+    const [t1, r1] = RETENTION_POINTS[i + 1]!;
     if (progress >= t0 && progress <= t1) {
       const ratio = (progress - t0) / (t1 - t0);
       const smooth = (1 - Math.cos(ratio * Math.PI)) / 2;
