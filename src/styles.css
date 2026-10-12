@@ -161,13 +161,13 @@
 }
 .tt-frame {
   width: 100%;
-  max-width: 410px;
-  height: 860px;
-  max-height: 94vh;
+  max-width: none;
+  height: 100vh;
+  max-height: none;
   background-color: #000;
-  border-radius: 36px;
-  border: 5px solid #1f1f22;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.95);
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
   overflow-y: auto;
   overflow-x: hidden;
   display: flex;
