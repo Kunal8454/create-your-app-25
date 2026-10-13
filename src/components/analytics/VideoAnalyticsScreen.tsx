@@ -315,23 +315,25 @@ export function VideoAnalyticsScreen() {
                 <CardTitle title="Locations" editable={editMode} />
                 <div className="tt-location-list">
                   {locations.map((item, index) => (
-                    <div className="tt-location-item" key={`${item.label}-${index}`}>
+                    <div className="tt-location-item" style={editMode ? undefined : { paddingRight: 0 }} key={`${item.label}-${index}`}>
                       <ProgressList data={[item]} editable={editMode} />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="tt-location-delete"
-                        aria-label={`Delete ${item.label}`}
-                        title={`Delete ${item.label}`}
-                        onClick={() => removeCountry(index)}
-                      >
-                        <Trash2 />
-                      </Button>
+                      {editMode && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="tt-location-delete"
+                          aria-label={`Delete ${item.label}`}
+                          title={`Delete ${item.label}`}
+                          onClick={() => removeCountry(index)}
+                        >
+                          <Trash2 />
+                        </Button>
+                      )}
                     </div>
                   ))}
                 </div>
-                {locations.length < 5 ? (
+                {!editMode ? null : locations.length < 5 ? (
                   <div className="tt-location-add">
                     <Input
                       value={newCountry}
