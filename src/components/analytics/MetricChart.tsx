@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Ed } from "./primitives";
 
 export type Metric = {
@@ -25,11 +25,24 @@ export function MetricChart({
   editable: boolean;
 }) {
   const [selected, setSelected] = useState(metric.points.length - 2);
-  const n = metric.points.length;
-  const maxVal = Math.max(...metric.points, 1);
+  const storeKey = `tt-chart:${metric.name}`;
+  const [points, setPoints] = useState<number[]>(metric.points);
+  const svgRef = useRef<SVGSVGElement>(null);
+  const dragIdx = useRef<number | null>(null);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(storeKey);
+      setPoints(raw ? (JSON.parse(raw) as number[]) : metric.points);
+    } catch {
+      setPoints(metric.points);
+    }
+  }, [storeKey, metric.points]);
+  const baseMax = Math.max(...metric.points, 1);
+  const n = points.length;
+  const maxVal = Math.max(...points, 1);
   const step = (X1 - X0) / (n - 1);
-  const xs = metric.points.map((_, i) => X0 + i * step);
-  const ys = metric.points.map((v) => YBOT - (v / maxVal) * (YBOT - YTOP));
+  const xs = points.map((_, i) => X0 + i * step);
+  const ys = points.map((v) => YBOT - (v / maxVal) * (YBOT - YTOP));
 
   const line = xs.map((x, i) => `${i === 0 ? "M" : "L"} ${x.toFixed(1)} ${ys[i]!.toFixed(1)}`).join(" ");
   const area = `${line} L ${X1} ${YBOT} L ${X0} ${YBOT} Z`;
@@ -40,7 +53,24 @@ export function MetricChart({
 
   return (
     <div className="tt-chart-box">
-      <svg width="100%" height="200" viewBox="0 0 350 200" style={{ overflow: "visible" }}>
+      <svg
+        ref={svgRef}
+        onPointerMove={(e) => {
+          if (dragIdx.current === null || !svgRef.current) return;
+          const r = svgRef.current.getBoundingClientRect();
+          const y = ((e.clientY - r.top) / r.height) * 200;
+          const frac = Math.min(Math.max((YBOT - y) / (YBOT - YTOP), 0), 1.3);
+          const i = dragIdx.current;
+          setPoints((prev) => {
+            const next = prev.map((v, j) => (j === i ? Math.round(frac * baseMax * 100) / 100 : v));
+            try { localStorage.setItem(storeKey, JSON.stringify(next)); } catch { /* ignore */ }
+            return next;
+          });
+        }}
+        onPointerUp={() => (dragIdx.current = null)}
+        onPointerLeave={() => (dragIdx.current = null)}
+        style={{ overflow: "visible", touchAction: editable ? "none" : "auto" }}
+        width="100%" height="200" viewBox="0 0 350 200">
         <defs>
           <linearGradient id="curveGrad" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#5b9bf6" stopOpacity="0.32" />
@@ -58,9 +88,15 @@ export function MetricChart({
             key={i}
             cx={x}
             cy={ys[i]}
-            r={i === sel ? 6 : 3.4}
+            r={i === sel ? 6 : editable ? 5 : 3.4}
             className={`tt-chart-pt${i === sel ? " active" : ""}`}
             onClick={() => setSelected(i)}
+            onPointerDown={(e) => {
+              setSelected(i);
+              if (!editable) return;
+              dragIdx.current = i;
+              (e.target as Element).releasePointerCapture?.(e.pointerId);
+            }}
           />
         ))}
       </svg>
@@ -94,7 +130,7 @@ export function MetricChart({
         }}
       >
         <div className="tt-tt-date">{labels[sel]}</div>
-        <div className="tt-tt-val">{formatValue(metric.points[sel]!)}</div>
+        <div className="tt-tt-val">{formatValue(points[sel]!)}</div>
       </div>
     </div>
   );
