@@ -408,6 +408,8 @@ function VideoPreview({ thumb, onClick }: { thumb: string | null; onClick: () =>
   );
 }
 
+const LIKES_DEFAULT = [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
 function LikesPreview({
   thumb,
   onClick,
@@ -423,11 +425,43 @@ function LikesPreview({
 }) {
   const currentProgress = value / 100;
   const seconds = Math.round(currentProgress * 24);
-  const currentPct = value === 0 ? 100 : value <= 3 ? Math.round(100 - (value / 3) * 100) : 0;
-
-  // yTop = 10 (100%), yMid = 52 (50%), yBottom = 94 (0%)
-  const curveD = "M 0,10 L 25,94 L 1000,94";
-  const areaD = "M 0,10 L 25,94 L 0,94 Z";
+  const [pts, setPts] = useState<number[]>(LIKES_DEFAULT);
+  const plotRef = useRef<HTMLDivElement>(null);
+  const dragging = useRef(false);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("tt-state:likesCurve");
+      if (raw) setPts(JSON.parse(raw) as number[]);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+  const editAt = (clientX: number, clientY: number) => {
+    const el = plotRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const fx = Math.min(Math.max((clientX - r.left) / r.width, 0), 1);
+    const yv = ((clientY - r.top) / r.height) * 100;
+    const pct = Math.round(Math.min(Math.max(((94 - yv) / 84) * 100, 0), 100));
+    const idx = Math.round(fx * (pts.length - 1));
+    setPts((prev) => {
+      const next = prev.map((v, i) => (i === idx ? pct : v));
+      try {
+        localStorage.setItem("tt-state:likesCurve", JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  };
+  const yOf = (v: number) => 94 - (v / 100) * 84;
+  const xOf = (i: number) => (i / (pts.length - 1)) * 1000;
+  const fi = currentProgress * (pts.length - 1);
+  const i0 = Math.floor(fi);
+  const i1 = Math.min(i0 + 1, pts.length - 1);
+  const currentPct = Math.round(pts[i0]! + (pts[i1]! - pts[i0]!) * (fi - i0));
+  const curveD = pts.map((v, i) => `${i === 0 ? "M" : "L"} ${xOf(i).toFixed(1)},${yOf(v).toFixed(1)}`).join(" ");
+  const areaD = `${curveD} L 1000,94 L 0,94 Z`;
 
   const markerX = Number((currentProgress * 1000).toFixed(1));
   const markerY = Number((94 - (currentPct / 100) * 84).toFixed(1));
@@ -444,7 +478,21 @@ function LikesPreview({
       </div>
 
       <div className="tt-retention-chart-row">
-        <div className="tt-retention-plot">
+        <div
+          className="tt-retention-plot"
+          ref={plotRef}
+          style={editable ? { touchAction: "none", cursor: "crosshair" } : undefined}
+          onPointerDown={(e) => {
+            if (!editable) return;
+            dragging.current = true;
+            editAt(e.clientX, e.clientY);
+          }}
+          onPointerMove={(e) => {
+            if (editable && dragging.current) editAt(e.clientX, e.clientY);
+          }}
+          onPointerUp={() => (dragging.current = false)}
+          onPointerLeave={() => (dragging.current = false)}
+        >
           <svg viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">
             <defs>
               <linearGradient id="likesGrad" x1="0" y1="0" x2="0" y2="1">
@@ -462,6 +510,15 @@ function LikesPreview({
 
             <line x1={markerX} y1="10" x2={markerX} y2="94" className="tt-retention-marker-line" />
           </svg>
+          {editable
+            ? pts.map((v, i) => (
+                <div
+                  key={i}
+                  className="tt-retention-marker-dot"
+                  style={{ left: `${(i / (pts.length - 1)) * 100}%`, top: `${yOf(v)}%`, width: 6, height: 6, background: "#fff", border: "1px solid #55aaff" }}
+                />
+              ))
+            : null}
           <div
             className="tt-retention-marker-dot"
             style={{
